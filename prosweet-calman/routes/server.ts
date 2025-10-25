@@ -18,7 +18,7 @@ app.use(
   cors({
     origin: "*",
     allowMethods: ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
-    allowHeaders: ["Content-Type", "If-Match"],
+    allowHeaders: ["Content-Type", "If-Match", "Authorization"],
     maxAge: 86400,
   })
 );
@@ -30,8 +30,13 @@ app.get("/health", (c) => c.json({ ok: true }));
  * Lists available calendars discovered for the authenticated principal.
  */
 app.get("/calendars", async (c) => {
-  const data = await listCalendars();
-  return c.json({ calendars: data });
+  try {
+    const auth = c.req.header("Authorization");
+    const calendars = await listCalendars(auth);
+    return c.json(calendars);
+  } catch (err) {
+    return c.json({ error: (err as Error).message }, 401);
+  }
 });
 
 /**
@@ -40,17 +45,23 @@ app.get("/calendars", async (c) => {
  * If `all=true` is set, ts-caldav will fetch all events (may be heavy).
  */
 app.get("/events", async (c) => {
-  const calendarUrl = c.req.query("calendarUrl");
-  if (!calendarUrl) {
-    throw new HTTPException(400, { message: "Missing ?calendarUrl" });
+  try {
+    const auth = c.req.header("Authorization");
+    const calendarUrl = c.req.query("calendarUrl");
+    if (!calendarUrl) {
+      throw new HTTPException(400, { message: "Missing ?calendarUrl" });
+    }
+    const opts: ListEventsOptions = {
+      start: c.req.query("start") ?? undefined,
+      end: c.req.query("end") ?? undefined,
+      all: c.req.query("all") === "true" ? true : undefined,
+    };
+    const events = await listEvents(auth, calendarUrl, opts);
+    return c.json({ events });
+  } catch (err) {
+    const status = err instanceof HTTPException ? err.status : 401;
+    return c.json({ error: (err as Error).message }, status);
   }
-  const opts: ListEventsOptions = {
-    start: c.req.query("start") ?? undefined,
-    end: c.req.query("end") ?? undefined,
-    all: c.req.query("all") === "true" ? true : undefined,
-  };
-  const events = await listEvents(calendarUrl, opts);
-  return c.json({ events });
 });
 
 /**
@@ -65,15 +76,20 @@ app.get("/events", async (c) => {
  * }
  */
 app.post("/events", async (c) => {
-  const body = await c.req.json();
-  if (!body?.calendarUrl || !body?.summary || !body?.start || !body?.end) {
-    throw new HTTPException(400, {
-      message:
-        "Required: calendarUrl, summary, start(ISO), end(ISO). Optional: startTzid, endTzid, description, location, uid, alarms, rrule, allDay",
-    });
+  try {
+    const auth = c.req.header("Authorization");
+    const body = await c.req.json();
+    if (!body?.calendarUrl || !body?.summary || !body?.start || !body?.end) {
+      throw new HTTPException(400, {
+        message:
+          "Required: calendarUrl, summary, start(ISO), end(ISO). Optional: startTzid, endTzid, description, location, uid, alarms, rrule, allDay",
+      });
+    }
+    const created = await createEvent(auth, body);
+    return c.json({ created });
+  } catch (err) {
+    return c.json({ error: (err as Error).message }, 401);
   }
-  const created = await createEvent(body);
-  return c.json({ created });
 });
 
 /**
