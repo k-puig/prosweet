@@ -3,6 +3,10 @@ import { v4 as uuid } from 'uuid';
 
 import {Chat, GoogleGenAI} from '@google/genai';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const SECRET_KEY = process.env.SECRET_KEY;
+if (!SECRET_KEY) {
+  throw new Error("No secret key provided. This is needed to secure socket access.");
+}
 
 const ai = new GoogleGenAI({apiKey: GEMINI_API_KEY, apiVersion: 'v1alpha'});
 
@@ -17,15 +21,20 @@ type MessagePayload = {
   msg: string
 }
 
+type UserCredentials = {
+  userId: string,
+  secretKey: string
+}
+
 export default function setupChatSocketEvents(io: Server) {
   io.on("connection", (socket) => {
     console.log(`Socket ${socket.id} connected`);
 
     socket.emit("useid", uuid());
 
-    socket.on("initwithid", (id: string) => {
-      if (!chatMap.has(id)) {
-        chatMap.set(id, ai.chats.create({
+    socket.on("initwithid", (cred: UserCredentials) => {
+      if (!chatMap.has(cred.userId) && cred.secretKey == SECRET_KEY) {
+        chatMap.set(cred.userId, ai.chats.create({
           model: 'gemini-2.5-flash',
           config: { systemInstruction: sysPrompt }
         }));
