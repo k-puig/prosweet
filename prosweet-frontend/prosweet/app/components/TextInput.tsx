@@ -5,6 +5,6 @@ export default function TextInput(props: { inputContent: string, onChange: (s:st
   }
 
   return <>
-    <textarea className="m-8 px-5 py-2 text-gray-900 bg-white rounded-md text-sm font-medium hover:bg-gray-300" value={props.inputContent} onInput={onInput}></textarea>
+    <textarea className="w-full min-h-[48px] p-3 bg-gray-100 rounded-lg border border-gray-300 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500 overflow-hidden" value={props.inputContent} onInput={onInput}></textarea>
   </>
 }

@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -16,6 +17,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
         {/* Left side: Nav links */}
         <div className="flex items-center gap-2">
+          
           <Link
             href="/"
             className={`px-3 py-1 rounded-md text-sm font-medium ${
@@ -23,12 +25,21 @@ export default function Navbar() {
                 ? "bg-gray-100 text-gray-900"
                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
             }`}
-          >
-            Home
+      >             <Image
+            src="/clock.svg"
+            alt="ProSweet logo"
+            width={32}
+            height={32}
+            className="w-8 h-8"
+            priority
+          />
+
+
+            
           </Link>
           <Link
             href="/calendar"
-            className={`px-3 py-1 rounded-md text-sm font-medium ${
+            className={`px-3 py-1 rounded-md text-sm font-bold ${
               pathname === "/calendar"
                 ? "bg-gray-100 text-gray-900"
                 : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
@@ -40,7 +51,7 @@ export default function Navbar() {
             <Link
               key={index}
               href="/chat"
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-900"
+              className="px-3 py-1 text-sm font-bold text-gray-600 hover:text-gray-900"
             >
               {item}
             </Link>
