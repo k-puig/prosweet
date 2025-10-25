@@ -11,6 +11,7 @@ io.bind(engine);
 setupChatSocketEvents(io);
 
 const app = new Hono();
+app.get("/", (c) => c.text("Hello"));
 
 const { websocket } = engine.handler();
 
