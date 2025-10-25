@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.16",
+    "framer-motion": "^12.23.24",
     "next": "16.0.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "ts-caldav": "^0.2.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
