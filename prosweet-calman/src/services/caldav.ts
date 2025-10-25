@@ -1,4 +1,10 @@
-// caldav.ts
+// src/services/caldav.ts
+/**
+ * This service encapsulates the business logic for interacting with a CalDAV
+ * server. It handles client creation, calendar and event listing, and event
+ * creation and deletion. This keeps the core CalDAV functionality separate
+ * from the routing layer.
+ */
 import { CalDAVClient } from "ts-caldav";
 
 const CALDAV_BASE_URL = "http://localhost:5232/";
