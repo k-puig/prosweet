@@ -6,8 +6,11 @@
   "dependencies": {
     "@prisma/client": "^6.18.0",
     "@socket.io/bun-engine": "^0.0.3",
+    "@types/uuid": "^11.0.0",
     "hono": "^4.10.3",
-    "socket.io": "^4.8.1"
+    "openai": "^6.7.0",
+    "socket.io": "^4.8.1",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
