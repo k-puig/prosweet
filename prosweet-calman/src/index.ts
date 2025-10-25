@@ -3,7 +3,6 @@ import { Server as Engine } from "@socket.io/bun-engine";
 import { Server } from "socket.io";
 import { Hono } from "hono";
 import setupChatSocketEvents from "./sockets/chat";
-import caldavRoutes from "./routes/caldav";
 
 const io = new Server({
   connectionStateRecovery: {
@@ -37,7 +36,6 @@ engine.opts.cors = {
 }
 
 app.get("/", (c) => c.text("Hello"));
-app.route("/caldav", caldavRoutes);
 
 const { websocket } = engine.handler();
 
