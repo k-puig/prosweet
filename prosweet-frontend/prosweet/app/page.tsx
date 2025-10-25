@@ -1,4 +1,8 @@
 import Link from "next/link";
+// import ChatMenu from "./components/ChatMenu";
+// import ChatButton from "./components/ChatButton";
+// import ChatMessage from "./components/ChatMessage";
+// import TextInput from "./components/TextInput";
 
 export default function HomePage() {
   return (
@@ -13,8 +17,11 @@ export default function HomePage() {
         </Link>
 
         <button className="px-5 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800">
-          Register
+        Something
         </button>
+        
+
+
       </div>
     </div>
   );

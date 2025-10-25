@@ -9,13 +9,23 @@ export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const navItems = ["Item", "Item", "Item", "Item", "Item", "Item"];
+  const navItems = ["Chat", "Alarm", "Item", "Item", "Item", "Item"];
 
   return (
     <nav className="w-full bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
         {/* Left side: Nav links */}
         <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className={`px-3 py-1 rounded-md text-sm font-medium ${
+              pathname === "/home"
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            }`}
+          >
+            Home
+          </Link>
           <Link
             href="/calendar"
             className={`px-3 py-1 rounded-md text-sm font-medium ${
@@ -29,7 +39,7 @@ export default function Navbar() {
           {navItems.map((item, index) => (
             <Link
               key={index}
-              href="#"
+              href="/chat"
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-900"
             >
               {item}
