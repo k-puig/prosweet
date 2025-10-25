@@ -4,13 +4,17 @@ import datetime
 import requests
 import base64
 import json
+import uuid
 import getpass
 
 
-# 🧩 1️⃣ create_task — now accepts credentials dynamically
-def create_task(uid: int, name: str, summary: str, start_time: str, end_time: str,
+# create_task — now auto-generates UID
+def create_task(name: str, summary: str, start_time: str, end_time: str,
                 username: str, password: str, calendar_id: str) -> dict:
     """Creates and uploads a calendar event to the Radicale server."""
+
+    # Generate a unique UID for the new event
+    uid = str(uuid.uuid4())
 
     calendar_item: dict = {
         "uid": uid,
@@ -22,15 +26,16 @@ def create_task(uid: int, name: str, summary: str, start_time: str, end_time: st
         "password": password,
         "calendar_id": calendar_id,
     }
+
     add_task(calendar_item)
     return calendar_item
 
 
-# ⚙️ 2️⃣ add_task — uses dynamic credentials from task dict
+# add_task — dynamic credentials + UID collision check
 def add_task(task: dict):
     """
-    Uploads (or updates) a task to the CalDAV server (Radicale) as an iCalendar event (.ics file).
-    Automatically handles missing collections and proper CalDAV headers.
+    Uploads a task to the CalDAV (Radicale) server as an iCalendar VEVENT (.ics file).
+    Automatically handles UID conflicts and authentication.
     """
 
     username = task["username"]
@@ -71,39 +76,42 @@ def add_task(task: dict):
     headers = {
         "Content-Type": "text/calendar",
         "Authorization": "Basic " + base64.b64encode(f"{username}:{password}".encode()).decode(),
-        "If-None-Match": "*",
+        "If-None-Match": "*",  # prevents overwriting existing UIDs
     }
 
-    print(f"➡️ Uploading event to: {caldav_event_url}")
-    response = requests.put(caldav_event_url, headers=headers, data=ical_event.encode("utf-8"), timeout=10)
+    try:
+        print(f"Uploading event to: {caldav_event_url}")
+        response = requests.put(caldav_event_url, headers=headers, data=ical_event.encode("utf-8"), timeout=10)
 
-    # Retry as update if already exists
-    if response.status_code == 412:
-        print("ℹ️ Event already exists, updating instead...")
-        head = requests.head(caldav_event_url, auth=(username, password))
-        etag = head.headers.get("ETag", None)
-        if etag:
-            headers.pop("If-None-Match", None)
-            headers["If-Match"] = etag
-            response = requests.put(caldav_event_url, headers=headers, data=ical_event.encode("utf-8"), timeout=10)
+        # 409/412 = UID or ETag conflict → regenerate new UID once
+        if response.status_code in (409, 412):
+            print("UID conflict detected, regenerating and retrying...")
+            new_uid = str(uuid.uuid4())
+            new_url = f"{base_url}/{username}/{calendar_id}/{new_uid}.ics"
+            task["uid"] = new_uid
+            headers["If-None-Match"] = "*"  # reset header
+            response = requests.put(new_url, headers=headers, data=ical_event.encode("utf-8"), timeout=10)
 
-    if response.status_code in (200, 201, 204):
-        print("✅ Task successfully added or updated on CalDAV server!")
-        return True
-    else:
-        print(f"❌ Failed to add task: {response.status_code} {response.reason}")
-        print("Response text:", response.text)
+        if response.status_code in (200, 201, 204):
+            print("Task successfully added or updated on CalDAV server!")
+            return True
+        else:
+            print(f"Failed to add task: {response.status_code} {response.reason}")
+            print("Response text:", response.text)
+            return False
+
+    except requests.exceptions.RequestException as e:
+        print(f"Network error: {e}")
         return False
 
 
-# 🧠 3️⃣ Function schema for AI
+# Function schema for AI — no uid anymore
 create_task_schema = {
     "name": "create_task",
-    "description": "Creates a calendar task in the user's Radicale calendar.",
+    "description": "Creates a new calendar event in the user's Radicale calendar.",
     "parameters": {
         "type": "object",
         "properties": {
-            "uid": {"type": "integer"},
             "name": {"type": "string"},
             "summary": {"type": "string"},
             "start_time": {"type": "string"},
@@ -112,22 +120,22 @@ create_task_schema = {
             "password": {"type": "string"},
             "calendar_id": {"type": "string"},
         },
-        "required": ["uid", "name", "summary", "start_time", "end_time", "username", "password", "calendar_id"],
+        "required": ["name", "summary", "start_time", "end_time", "username", "password", "calendar_id"],
     },
 }
 
 
-# 🚀 4️⃣ Main runtime logic
+# Main runtime logic
 if __name__ == "__main__":
-    # User enters credentials interactively
-    #print("🔐 Please enter your Radicale credentials:")
-    #username = input("Username: ")
-    #password = getpass.getpass("Password: ")
-    #calendar_id = input("Calendar ID (from web UI): ")
+    # Optional: prompt the user interactively
+    # print("Please enter your Radicale credentials:")
+    # username = input("Username: ")
+    # password = getpass.getpass("Password: ")
+    # calendar_id = input("Calendar ID (from web UI): ")
 
     username = "admin"
     password = "mypassword"
-    calendar_id = "aa5e311e-00e3-5874-0b59-e4cb9e1dfd32" 
+    calendar_id = "aa5e311e-00e3-5874-0b59-e4cb9e1dfd32"
 
     today = datetime.date.today().isoformat()
 
@@ -146,16 +154,17 @@ if __name__ == "__main__":
         "All date/time values must be ISO 8601 formatted strings (YYYY-MM-DDTHH:MM:SS). "
         "When the user asks to add or schedule something, respond by calling the `create_task` function "
         "with the proper arguments including credentials.\n\n"
-        "User: Schedule a yoga session tomorrow morning from 7:00 to 8:00 AM. "
-        "My user ID is 1."
+        "User: Schedule a yoga session tomorrow morning from 7:00 to 8:00 AM."
     )
 
     response = model.generate_content([prompt])
 
-    if response.candidates[0].content.parts[0].function_call:
-        func = response.candidates[0].content.parts[0].function_call
+    part = response.candidates[0].content.parts[0]
+
+    if hasattr(part, "function_call") and part.function_call:
+        func = part.function_call
         if func.name == "create_task":
             result = create_task(**func.args)
             print(result)
     else:
-        print(response.candidates[0].content.parts[0].text)
+        print(part.text)
