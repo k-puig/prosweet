@@ -1,18 +1,16 @@
 import { Server, Socket } from "socket.io";
 import { v4 as uuid } from 'uuid';
 
-import OpenAI from 'openai';
+import {Chat, GoogleGenAI} from '@google/genai';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-const client = new OpenAI({
-  apiKey: process.env['OPENAI_API_KEY'],
-  baseURL: process.env['OPENAI_ENDPOINT']
-});
+const ai = new GoogleGenAI({apiKey: GEMINI_API_KEY, apiVersion: 'v1alpha'});
 
 const sysPrompt = `
 You're a helpful chat bot that always assists the user with their questions or commands.
 `;
 
-const chatMap = new Map<string, OpenAI.Chat.Completions.ChatCompletionMessageParam[]>();
+const chatMap = new Map<string, Chat>();
 
 type MessagePayload = {
   userId: string
@@ -27,9 +25,10 @@ export default function setupChatSocketEvents(io: Server) {
 
     socket.on("initwithid", (id: string) => {
       if (!chatMap.has(id)) {
-        chatMap.set(id, [
-          { role: 'system', content: sysPrompt }
-        ]);
+        chatMap.set(id, ai.chats.create({
+          model: 'gemini-2.5-flash',
+          config: { systemInstruction: sysPrompt }
+        }));
       }
     });
 
@@ -41,14 +40,11 @@ export default function setupChatSocketEvents(io: Server) {
 
       console.log("got user message: \"" + userMessage + "\" from socket " + socket);
       var currentBotMessage = "";
-      chatMap.set(userMessage.userId, chatMap.get(userMessage.userId)!.concat({ role: 'user', content: userMessage.msg }));
-      client.chat.completions.create({
-        model: "google/gemini-2.5-flash",
-        messages: chatMap.get(userMessage.userId)!,
-        stream: true,
-      }).then(async (stream) => {
+
+      const chat = chatMap.get(userMessage.userId)!;
+      chat.sendMessageStream({ message: userMessage.msg }).then(async (stream) => {
         for await (const chunk of stream) {
-          const content = chunk.choices[0]?.delta?.content || '';
+          const content = chunk.text;
 
           if (content) {
             socket.emit("botresponse", {block: content, endStream: false});
@@ -58,9 +54,7 @@ export default function setupChatSocketEvents(io: Server) {
       }).catch(async (err) => {
         socket.emit("chaterr", err);
       }).finally(async () => {
-        chatMap.set(userMessage.userId, chatMap.get(userMessage.userId)!.concat({ role: 'assistant', content: currentBotMessage }));
         socket.emit("botresponse", {block: "", endStream: true});
-        console.log(chatMap.get(userMessage.userId));
       });
     });
 
