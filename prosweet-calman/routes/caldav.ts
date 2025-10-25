@@ -7,7 +7,7 @@ import { CalDAVClient } from "ts-caldav";
  *  - CALDAV_USERNAME
  *  - CALDAV_PASSWORD
  */
-const CALDAV_BASE_URL = "http://localhost:5232";
+const CALDAV_BASE_URL = "http://localhost:5232/";
 const CALDAV_USERNAME = "test";
 const CALDAV_PASSWORD = "test";
 
@@ -17,7 +17,7 @@ if (!CALDAV_BASE_URL || !CALDAV_USERNAME || !CALDAV_PASSWORD) {
   );
 }
 
-let clientPromise: Promise<ReturnType<typeof CalDAVClient.create>> | null = null;
+let clientPromise: Promise<CalDAVClient> | null = null;
 
 async function getClient() {
   if (!clientPromise) {
@@ -62,9 +62,9 @@ export async function listEvents(
     all
       ? { all: true }
       : {
-          start: start ? new Date(start) : undefined,
-          end: end ? new Date(end) : undefined,
-        };
+        start: start ? new Date(start) : undefined,
+        end: end ? new Date(end) : undefined,
+      };
 
   const events = await client.getEvents(calendarUrl, range as any);
   // Events are already parsed to structured objects by ts-caldav.
@@ -88,12 +88,12 @@ export type CreateEventInput = {
     | { action: "DISPLAY"; trigger: string; description?: string }
     | { action: "AUDIO"; trigger: string }
     | {
-        action: "EMAIL";
-        trigger: string;
-        summary?: string;
-        description?: string;
-        attendees?: string[];
-      }
+      action: "EMAIL";
+      trigger: string;
+      summary?: string;
+      description?: string;
+      attendees?: string[];
+    }
   >;
   // Recurrence (RRULE) is supported; pass-through as raw string if you use it.
   rrule?: string;
