@@ -1,4 +1,11 @@
-// server.ts
+// src/routes/caldav.ts
+/**
+ * This file defines the Hono routes for the CalDAV functionality. It imports
+ * the business logic from the caldav service and sets up endpoints for
+ * listing calendars, listing events, creating events, and deleting events.
+ * The routes handle input validation and error handling, offloading the core
+ * work to the service layer.
+ */
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
@@ -8,7 +15,7 @@ import {
   createEvent,
   deleteEvent,
   type ListEventsOptions,
-} from "./caldav";
+} from "../services/caldav";
 
 const app = new Hono();
 
@@ -95,18 +102,4 @@ app.delete("/events/:uid", async (c) => {
   return c.json(result);
 });
 
-// Global error handler
-app.onError((err, c) => {
-  console.error(err);
-  const status =
-    err instanceof HTTPException ? err.status : 500;
-  const message =
-    err instanceof HTTPException ? err.message : "Internal Server Error";
-  return c.json({ error: message }, status);
-});
-
-// Bun entrypoint
-export default {
-  port: Number(process.env.PORT ?? 3001),
-  fetch: app.fetch,
-};
+export default app;
