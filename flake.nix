@@ -19,10 +19,6 @@
           prisma-engines
           openssl_3 # needed for prisma
 
-          # DB deps
-          ephemeralpg
-          postgresql
-
           # Calendar
           radicale
         ];
