@@ -1,3 +1,4 @@
+
 import { Server as Engine } from "@socket.io/bun-engine";
 import { Server } from "socket.io";
 import { Hono } from "hono";
@@ -11,6 +12,22 @@ io.bind(engine);
 setupChatSocketEvents(io);
 
 const app = new Hono();
+
+app.use("/*", async (c, next) => {
+  c.header("Access-Control-Allow-Origin", "*");
+  c.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  c.header("Access-Control-Allow-Headers", "*");
+  if (c.req.method === "OPTIONS") {
+    return new Response(null, { status: 204 });
+  }
+  await next();
+});
+engine.opts.cors = {
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: "*"
+}
+
 app.get("/", (c) => c.text("Hello"));
 
 const { websocket } = engine.handler();
