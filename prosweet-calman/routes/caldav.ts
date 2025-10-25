@@ -11,11 +11,14 @@ if (!CALDAV_BASE_URL) {
 
 let clientPromise: Promise<CalDAVClient> | null = null;
 
-async function getClient(auth) {
-  if (!auth) return c.json({ error: "Missing Authorization header" }, 401);
+async function getClient(auth: string) {
+  if (!auth) {
+    return { error: "Missing Authorization header", status: 401 };
+  }
 
+  // Wrong scheme
   if (!auth.startsWith("Basic ")) {
-    return c.json({ error: "Invalid Authorization scheme" }, 401);
+    return { error: "Invalid Authorization scheme", status: 401 };
   }
 
   // Decode the Base64 part
@@ -50,34 +53,51 @@ export type ListEventsOptions = {
   all?: boolean;
 };
 
-export async function listCalendars(auth: string) {
-  const client = await getClient(auth);
-  // Each calendar has fields like: url, displayName, ctag, components, etc.
+export async function listCalendars(authHeader?: string) {
+  const client = await getClient(authHeader);
   const calendars = await client.getCalendars();
-  return calendars.map((c: any) => ({
-    url: c.url,
-    displayName: c.displayName ?? c.url,
-    components: c.components,
-    ctag: c.ctag,
-  }));
+
+  // Return just the URLs, trimmed of leading/trailing slashes
+  return calendars.map((c: any) =>
+    c.url.replace(/^\/|\/$/g, "")
+  );
 }
 
 export async function listEvents(
-  auth: string,
-  calendarUrl: string,
+  authHeader: string,
   { start, end, all }: ListEventsOptions = {}
 ) {
-  const client = await getClient(auth);
-  const range =
-    all
-      ? { all: true }
-      : {
-        start: start ? new Date(start) : undefined,
-        end: end ? new Date(end) : undefined,
-      };
+  const client = await getClient(authHeader);
 
-  const events = await client.getEvents(calendarUrl, range as any);
-  return events;
+  const calendars = await client.getCalendars();
+  if (!calendars || calendars.length === 0) {
+    throw new Error("No calendars found for this user");
+  }
+  // Use the first calendar exactly as returned (Radicale wants the trailing /)
+  const calendarUrl = calendars[0].url;
+
+  // Validate dates when provided
+  const toDate = (s?: string) => (s ? new Date(s) : undefined);
+  const startDate = toDate(start);
+  const endDate = toDate(end);
+  if (start && isNaN(startDate!.getTime())) throw new Error("Invalid start ISO datetime");
+  if (end && isNaN(endDate!.getTime())) throw new Error("Invalid end ISO datetime");
+
+  // Build half-open range per your rule
+  // - only start  => after start
+  // - only end    => before end
+  // - both        => between
+  // - neither     => all (or choose your own default)
+  const range =
+    all || (!start && !end)
+      ? { all: true }
+      : start && !end
+        ? { start: startDate }
+        : !start && end
+          ? { end: endDate }
+          : { start: startDate, end: endDate };
+
+  return client.getEvents(calendarUrl, range as any);
 }
 
 export type CreateEventInput = {
@@ -112,8 +132,18 @@ export type CreateEventInput = {
 export async function createEvent(auth: string, input: CreateEventInput) {
   const client = await getClient(auth);
 
+  const calendars = await client.getCalendars();
+  if (!calendars || calendars.length === 0) {
+    throw new Error("No calendars found for this user");
+  }
+
+  const calendarUrl = calendars[0].url;
+
+  if (!calendarUrl) {
+    throw new Error("Missing calendar URL");
+  }
+
   const {
-    calendarUrl,
     summary,
     start,
     end,
@@ -144,9 +174,60 @@ export async function createEvent(auth: string, input: CreateEventInput) {
   return created; // typically includes href/etag/uid
 }
 
-export async function deleteEvent(auth: string, calendarUrl: string, uid: string, etag?: string) {
-  const client = await getClient(auth);
-  // Many servers allow delete with just UID; some prefer ETag for safe delete
-  const res = await client.deleteEvent(calendarUrl, uid, etag);
-  return { ok: true, result: res };
+export async function deleteEvent(authHeader: string, uidOrHref: string, etag?: string) {
+  const client = await getClient(authHeader);
+  const calendars = await client.getCalendars();
+  if (!calendars?.length) throw new Error("No calendars found for this user");
+
+  const calendarUrl = calendars[0].url; // keep exact (with trailing /)
+
+  // Build href/uid
+  const href = uidOrHref.startsWith("/") || uidOrHref.endsWith(".ics")
+    ? uidOrHref
+    : `${calendarUrl}${uidOrHref}.ics`;
+  const uid = href.split("/").pop()!.replace(/\.ics$/i, "");
+
+  // Helper: extract HTTP status defensively
+  const getStatus = (e: any): number | undefined => {
+    if (e?.response?.status) return e.response.status;
+    if (typeof e?.status === "number") return e.status;
+    const m = typeof e?.message === "string" && e.message.match(/\bstatus(?:\s+code)?\s+(\d{3})\b/i);
+    if (m) return parseInt(m[1], 10);
+    return undefined;
+  };
+
+  try {
+    // Preferred path: use library delete (by uid)
+    const res = await client.deleteEvent(calendarUrl, uid, etag);
+    // If it returns, consider it success
+    return { ok: true, status: 204, result: res };
+  } catch (e: any) {
+    const status = getStatus(e);
+
+    // Normalize common server responses
+    if (status === 200 || status === 204) {
+      return { ok: true, status, note: "Normalized DELETE success (server returned 200/204)" };
+    }
+
+    // If 404, it's already gone
+    if (status === 404) {
+      return { ok: false, status: 404, error: "Event not found" };
+    }
+
+    // Fallback: verify by checking if the UID still exists
+    try {
+      const events = await client.getEvents(calendarUrl, { all: true } as any);
+      const stillThere = Array.isArray(events) && events.some((ev: any) => ev?.uid === uid);
+      if (!stillThere) {
+        return { ok: true, status: 204, note: "Verified deletion by absence after error" };
+      }
+    } catch {
+      // ignore verification failure, proceed to throw below
+    }
+
+    // Last resort: bubble up with more detail
+    const msg = typeof e?.message === "string" ? e.message : String(e);
+    throw new Error(`Failed to delete event (status ${status ?? "unknown"}): ${msg}`);
+  }
 }
+

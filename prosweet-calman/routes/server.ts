@@ -47,16 +47,16 @@ app.get("/calendars", async (c) => {
 app.get("/events", async (c) => {
   try {
     const auth = c.req.header("Authorization");
-    const calendarUrl = c.req.query("calendarUrl");
-    if (!calendarUrl) {
-      throw new HTTPException(400, { message: "Missing ?calendarUrl" });
-    }
+    // const calendarUrl = c.req.query("calendarUrl");
+    // if (!calendarUrl) {
+    //   throw new HTTPException(400, { message: "Missing ?calendarUrl" });
+    // }
     const opts: ListEventsOptions = {
       start: c.req.query("start") ?? undefined,
       end: c.req.query("end") ?? undefined,
       all: c.req.query("all") === "true" ? true : undefined,
     };
-    const events = await listEvents(auth, calendarUrl, opts);
+    const events = await listEvents(auth, opts);
     return c.json({ events });
   } catch (err) {
     const status = err instanceof HTTPException ? err.status : 401;
@@ -79,10 +79,10 @@ app.post("/events", async (c) => {
   try {
     const auth = c.req.header("Authorization");
     const body = await c.req.json();
-    if (!body?.calendarUrl || !body?.summary || !body?.start || !body?.end) {
+    if (!body?.summary || !body?.start || !body?.end) {
       throw new HTTPException(400, {
         message:
-          "Required: calendarUrl, summary, start(ISO), end(ISO). Optional: startTzid, endTzid, description, location, uid, alarms, rrule, allDay",
+          "Required: summary, start(ISO), end(ISO). Optional: startTzid, endTzid, description, location, uid, alarms, rrule, allDay",
       });
     }
     const created = await createEvent(auth, body);
@@ -97,19 +97,21 @@ app.post("/events", async (c) => {
  * Deletes an event by UID. If you store ETags, pass ?etag= to ensure safe delete.
  */
 app.delete("/events/:uid", async (c) => {
-  const uid = c.req.param("uid");
-  const calendarUrl = c.req.query("calendarUrl");
-  const etag = c.req.query("etag") ?? undefined;
+  try {
+    const auth = c.req.header("Authorization");
+    const uid = c.req.param("uid");
+    const etag = c.req.query("etag") ?? undefined;
 
-  if (!calendarUrl || !uid) {
-    throw new HTTPException(400, {
-      message: "Missing ?calendarUrl or :uid",
-    });
+    if (!auth) return c.json({ error: "Missing Authorization header" }, 401);
+    if (!uid) return c.json({ error: "Missing :uid" }, 400);
+
+    const result = await deleteEvent(auth, uid, etag);
+    return c.json(result);
+  } catch (err) {
+    return c.json({ error: (err as Error).message }, 401);
   }
-
-  const result = await deleteEvent(calendarUrl, uid, etag);
-  return c.json(result);
 });
+
 
 // Global error handler
 app.onError((err, c) => {
