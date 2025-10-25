@@ -1,7 +1,7 @@
 // caldav.ts
 import { CalDAVClient } from "ts-caldav";
 
-const CALDAV_BASE_URL = "http://localhost:5232/";
+const CALDAV_BASE_URL = process.env.CALDAV_URL;
 
 if (!CALDAV_BASE_URL) {
   throw new Error(
@@ -230,4 +230,3 @@ export async function deleteEvent(authHeader: string, uidOrHref: string, etag?: 
     throw new Error(`Failed to delete event (status ${status ?? "unknown"}): ${msg}`);
   }
 }
-
