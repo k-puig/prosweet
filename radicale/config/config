@@ -2,10 +2,9 @@
 hosts = 0.0.0.0:5232
 
 [auth]
-type = http_x_remote_user
-# type = htpasswd
-# htpasswd_filename = /config/users
-# htpasswd_encryption = bcrypt
+type = htpasswd
+htpasswd_filename = /config/users
+htpasswd_encryption = bcrypt
 
 [storage]
 filesystem_folder = /data/collections

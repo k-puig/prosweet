@@ -1,7 +1,7 @@
 // caldav.ts
 import { CalDAVClient } from "ts-caldav";
 
-const CALDAV_BASE_URL: any = process.env.CALDAV_URL;
+const CALDAV_BASE_URL = process.env.CALDAV_URL;
 
 if (!CALDAV_BASE_URL) {
   throw new Error(
@@ -34,7 +34,7 @@ async function getClient(auth: string) {
 
   if (!clientPromise) {
     clientPromise = CalDAVClient.create({
-      baseUrl: CALDAV_BASE_URL,
+      baseUrl: CALDAV_BASE_URL || "http://radicale:5232",
       auth: {
         type: "basic",
         username,

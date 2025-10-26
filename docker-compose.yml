@@ -4,10 +4,9 @@ services:
     container_name: prosweet-caldav
     networks: [appnet]
     ports:
-      - "3002:3000"
+      - "3002:3002"
     environment:
-      - NODE_ENV=production
-      - PORT=3000
+      - PORT=3002
       - CALDAV_URL=http://radicale:5232
 
   web:
@@ -16,6 +15,8 @@ services:
     networks: [appnet]
     ports:
       - "3003:3000"
+    environment:
+      - API_URL="http://localhost:3002"
 
   radicale:
     image: tomsquest/docker-radicale:latest

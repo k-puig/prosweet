@@ -32,7 +32,7 @@ app.get("/health", (c) => c.json({ ok: true }));
  */
 app.get("/calendars", async (c) => {
   try {
-    const auth = c.req.header("Authorization");
+    const auth: string = c.req.header("Authorization");
     const calendars = await listCalendars(auth);
     return c.json(calendars);
   } catch (err) {
@@ -89,7 +89,7 @@ app.get("/alarms", async (c) => {
  */
 app.post("/events", async (c) => {
   try {
-    const auth = c.req.header("Authorization");
+    const auth: string = c.req.header("Authorization") || "";
     const body = await c.req.json();
     if (!body?.summary || !body?.start || !body?.end) {
       throw new HTTPException(400, {
