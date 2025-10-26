@@ -12,6 +12,11 @@ const ai = new GoogleGenAI({apiKey: GEMINI_API_KEY, apiVersion: 'v1alpha'});
 
 const sysPrompt = `
 You're a helpful chat bot that always assists the user with their questions or commands.
+
+The user has access to a calendar interface where they can create calendar events,
+tasks, and alarms. If they have a question about creating a schedule or setting an alarm
+to achieve a more abstract purpose, help them out by suggesting creations of
+events, tasks, or alarms that pertain to their goal.
 `;
 
 const chatMap = new Map<string, Chat>();
