@@ -1,15 +1,12 @@
 prosweet.gay { 
-  tls internal
   reverse_proxy web:3000
 }
 
 api.prosweet.gay { 
-  tls internal
   reverse_proxy prosweet-caldav:3000
 }
 
 caldav.prosweet.gay {
-  tls internal
   encode zstd gzip
 
   # iOS autoconfig probes this
