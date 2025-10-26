@@ -1,5 +1,10 @@
-prosweet.gay { reverse_proxy web:3000 }
-api.prosweet.gay { reverse_proxy prosweet-caldav:3002 }
+prosweet.gay { 
+  reverse_proxy web:3000 
+}
+
+api.prosweet.gay { 
+  reverse_proxy prosweet-caldav:3002 
+}
 
 caldav.prosweet.gay {
   encode zstd gzip
