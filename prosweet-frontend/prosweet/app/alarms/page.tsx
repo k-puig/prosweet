@@ -1,9 +1,43 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAllEvents, createEvent, deleteEvent } from "@/lib/honoClient";
+import { useAlarms } from "../components/AlarmProvider"; // Import the provider hook
 
-// Type definition for clarity
+// API Client
+const API_URL = "http://155.138.197.46:3002";
+const AUTH = "Basic dGVzdDp0ZXN0";
+
+async function api<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: AUTH,
+      ...options?.headers,
+    },
+    ...options,
+  });
+  if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+  return res.json();
+}
+
+const getAllEvents = async () =>
+  api<{ events: any[] }>("/events?all=true");
+
+const createEvent = (data: {
+  summary: string;
+  start: string;
+  end: string;
+  alarms?: Array<{ action: string; trigger: string }>;
+}) =>
+  api<{ created: any }>("/events", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+const deleteEvent = (uid: string) =>
+  api(`/events/${uid}`, { method: "DELETE" });
+
+// Type definition
 type EventType = {
   uid: string;
   summary: string;
@@ -12,7 +46,7 @@ type EventType = {
   alarms?: Array<{ action: string; trigger: string }>;
 };
 
-// Utility to calculate the trigger time (e.g., "-PT15M" → -15 minutes)
+// Utility to calculate the trigger time
 function parseCalDAVTrigger(trigger: string) {
   const match = trigger.match(/(-)?PT(\d+)([MH])/);
   if (!match) return 0;
@@ -24,14 +58,15 @@ function parseCalDAVTrigger(trigger: string) {
 export default function AlarmsPage() {
   const [alarms, setAlarms] = useState<EventType[]>([]);
   const [loading, setLoading] = useState(false);
+  const { refreshAlarms } = useAlarms();
 
   // Form state
   const [summary, setSummary] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [trigger, setTrigger] = useState("15"); // minutes before
+  const [trigger, setTrigger] = useState("0");
 
-  // 🔄 Load alarms
+  // Load alarms
   async function loadAlarms() {
     setLoading(true);
     try {
@@ -43,10 +78,7 @@ export default function AlarmsPage() {
         return ev.alarms?.length && start > now;
       });
 
-      upcoming.sort(
-        (a, b) => +new Date(a.start) - +new Date(b.start)
-      );
-
+      upcoming.sort((a, b) => +new Date(a.start) - +new Date(b.start));
       setAlarms(upcoming);
     } catch (err) {
       console.error("Failed to fetch alarms:", err);
@@ -59,12 +91,12 @@ export default function AlarmsPage() {
     loadAlarms();
   }, []);
 
-  // 🆕 Add new alarm
+  // Add new alarm
   async function handleAddAlarm() {
     if (!summary || !date || !time) return alert("Please fill all fields.");
 
     const start = new Date(`${date}T${time}`);
-    const end = new Date(start.getTime() + 30 * 60000); // 30 min duration
+    const end = new Date(start.getTime() + 30 * 60000);
     const triggerStr = `-PT${trigger}M`;
 
     await createEvent({
@@ -77,21 +109,23 @@ export default function AlarmsPage() {
     setSummary("");
     setDate("");
     setTime("");
-    setTrigger("15");
-
+    setTrigger("0");
+    
     await loadAlarms();
+    refreshAlarms(); // Refresh the global alarm checker
   }
 
   async function handleDelete(uid: string) {
     await deleteEvent(uid);
     await loadAlarms();
+    refreshAlarms(); // Refresh the global alarm checker
   }
 
   return (
     <div className="max-w-3xl mx-auto p-6">
       <h1 className="text-3xl font-semibold mb-6 text-center">Upcoming Alarms</h1>
 
-      {/* 🆕 Create new alarm */}
+      {/* Create new alarm */}
       <div className="border rounded-lg p-4 mb-6 shadow-sm bg-white">
         <h2 className="font-medium mb-2">Add New Alarm</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -118,7 +152,7 @@ export default function AlarmsPage() {
             <input
               type="number"
               value={trigger}
-              min="1"
+              min="0"
               onChange={(e) => setTrigger(e.target.value)}
               className="w-16 border rounded-md px-2 py-1 text-sm text-center"
             />
