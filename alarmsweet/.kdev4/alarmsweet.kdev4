@@ -36,9 +36,17 @@ Name=alarmctl
 Type=Native Application
 
 [Launch][Launch Configuration 0][Data]
+Arguments=
 Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x02\x00\x00\x00\x14\x00a\x00l\x00a\x00r\x00m\x00s\x00w\x00e\x00e\x00t\x00\x00\x00\x10\x00a\x00l\x00a\x00r\x00m\x00c\x00t\x00l)
 Dependency Action=Build
+EnvironmentGroup=
+Executable=file:///home/kevin/Documents/GitHub/prosweet/alarmsweet
+External Terminal=xfce4-terminal --working-directory %workdir -e %exe
+Kill Before Executing Again=4194304
 Project Target=alarmsweet,alarmctl
+Use External Terminal=true
+Working Directory=file:///home/kevin/Documents/GitHub/prosweet/alarmsweet
+isExecutable=false
 
 [Launch][Launch Configuration 1]
 Configured Launch Modes=execute

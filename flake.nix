@@ -33,6 +33,8 @@
           libpulseaudio
           alsa-lib
           pkg-config
+          curlFull
+          nlohmann_json
 
           # Calendar
           radicale
