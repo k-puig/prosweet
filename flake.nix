@@ -9,6 +9,10 @@
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
+      requiredBoostComponents = with pkgs.boost.libs; [
+        system
+        thread
+      ];
     in {
       devShells.x86_64-linux.default = pkgs.mkShell {
         buildInputs = with pkgs; [
@@ -19,13 +23,24 @@
           prisma-engines
           openssl_3 # needed for prisma
 
+          # C++ deps
+          miniaudio
+          sioclient
+          ncurses
+          libgcc
+          cmake
+          boost
+          libpulseaudio
+          alsa-lib
+          pkg-config
+
           # Calendar
           radicale
         ];
         shellHook = with pkgs; ''
-          echo "Welcome to the methylphenidate dev environment!"
+          echo "Welcome to the prosweet dev environment!"
           export NIX_LDFLAGS="''${NIX_LDFLAGS/-rpath $out\/lib /}"
-          export LD_LIBRARY_PATH="${stdenv.cc.cc.lib}"/lib
+          export LD_LIBRARY_PATH="${stdenv.cc.cc.lib}"/lib:$LD_LIBRARY_PATH
           export PRISMA_SCHEMA_ENGINE_BINARY="${prisma-engines}/bin/migration-engine"
           export PRISMA_QUERY_ENGINE_BINARY="${prisma-engines}/bin/query-engine"
           export PRISMA_QUERY_ENGINE_LIBRARY="${prisma-engines}/lib/libquery_engine.node"
