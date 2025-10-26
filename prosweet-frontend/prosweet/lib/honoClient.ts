@@ -1,4 +1,4 @@
-const API_URL = process.env.API_URL || "https://prosweet.gay:3002"
+const API_URL = process.env.API_URL || "http://155.138.197.46:3002"
 const AUTH = process.env.CALDAV_AUTH || "Basic dGVzdDp0ZXN0"; // "Basic base64(username:password)"
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
