@@ -10,7 +10,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const navItems = ["Chat", "Alarm", "Item", "Item", "Item", "Item"];
+  const navItems = ["Chat", ];
 
   return (
     <nav className="w-full bg-white shadow-sm border-b">
@@ -56,7 +56,15 @@ export default function Navbar() {
               {item}
             </Link>
           ))}
+          <Link
+  href="/alarms"
+  className="px-3 py-1 text-sm font-bold text-gray-600 hover:text-gray-900"
+>
+  Alarms
+</Link>
+
         </div>
+        
 
         {/* Right side: Auth buttons */}
         <div className="flex items-center gap-2">
@@ -72,6 +80,7 @@ export default function Navbar() {
           >
             Register
           </Link>
+          
         </div>
 
         {/* Mobile menu toggle */}
