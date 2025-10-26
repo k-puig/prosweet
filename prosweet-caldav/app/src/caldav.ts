@@ -1,4 +1,3 @@
-// caldav.ts
 import { CalDAVClient } from "ts-caldav";
 
 const CALDAV_BASE_URL: any = process.env.CALDAV_URL;
@@ -54,7 +53,7 @@ export type ListEventsOptions = {
 };
 
 export async function listCalendars(authHeader?: string) {
-  const client = await getClient(authHeader);
+  const client: Promise<CalDAVClient | null> = await getClient(authHeader);
   const calendars = await client.getCalendars();
 
   // Return just the URLs, trimmed of leading/trailing slashes
@@ -252,3 +251,5 @@ export async function getAlarms(authHeader: string, uid: string) {
   if (!found) throw new Error(`Event not found for UID ${uid}`);
   return Array.isArray(found.alarms) ? found.alarms : [];
 }
+
+export { getClient };

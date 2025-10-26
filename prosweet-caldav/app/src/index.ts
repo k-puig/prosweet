@@ -7,8 +7,16 @@ import {
   listEvents,
   createEvent,
   deleteEvent,
+  getClient,
   type ListEventsOptions,
 } from "./caldav";
+import {
+  getTasks,
+  createTask,
+  deleteTask,
+  type CreateTaskInput,
+  type ListTasksOptions,
+} from "./tasks";
 import { getAlarmTimestamps } from "./alarm";
 
 const app = new Hono();
@@ -123,7 +131,85 @@ app.delete("/events/:uid", async (c) => {
     return c.json({ error: (err as Error).message }, 401);
   }
 });
+/* ---------------- Tasks (VTODO) ---------------- */
 
+/**
+ * GET /tasks?all=true|false&dueStart=<ISO>&dueEnd=<ISO>&completed=true|false
+ */
+app.get("/tasks", async (c) => {
+  try {
+    const auth: string = c.req.header("Authorization") || "";
+
+    const completedParam = c.req.query("completed");
+    const completed =
+      completedParam === "true" ? true :
+        completedParam === "false" ? false :
+          undefined;
+
+    const opts: ListTasksOptions = {
+      all: c.req.query("all") === "true" ? true : undefined,
+      dueStart: c.req.query("dueStart") ?? undefined,
+      dueEnd: c.req.query("dueEnd") ?? undefined,
+      completed,
+    };
+
+    const tasks = await getTasks(auth, opts);
+    return c.json({ tasks });
+  } catch (err) {
+    const status = err instanceof HTTPException ? err.status : 401;
+    return c.json({ error: (err as Error).message }, status);
+  }
+});
+
+/**
+ * POST /tasks
+ * Body: {
+ *   summary: string,
+ *   due?: string(ISO),
+ *   description?: string,
+ *   location?: string,
+ *   uid?: string,
+ *   alarms?: [...]
+ * }
+ */
+app.post("/tasks", async (c) => {
+  try {
+    const auth: string = c.req.header("Authorization") || "";
+    const body = (await c.req.json()) as CreateTaskInput;
+
+    if (!body?.summary) {
+      throw new HTTPException(400, {
+        message: "Required: summary. Optional: due, description, location, uid, alarms",
+      });
+    }
+
+    const created = await createTask(auth, body);
+    return c.json({ created });
+  } catch (err) {
+    const status = err instanceof HTTPException ? err.status : 401;
+    return c.json({ error: (err as Error).message }, status);
+  }
+});
+
+/**
+ * DELETE /tasks/:uid?etag=<optional>
+ * Deletes a task (VTODO) by UID (or href if you pass a .ics path).
+ */
+app.delete("/tasks/:uid", async (c) => {
+  try {
+    const auth: string = c.req.header("Authorization") || "";
+    const uid = c.req.param("uid");
+    const etag = c.req.query("etag") ?? undefined;
+
+    if (!uid) return c.json({ error: "Missing :uid" }, 400);
+
+    const result = await deleteTask(auth, uid, etag);
+    return c.json(result);
+  } catch (err) {
+    const status = err instanceof HTTPException ? err.status : 401;
+    return c.json({ error: (err as Error).message }, status);
+  }
+});
 
 // Global error handler
 app.onError((err, c) => {
