@@ -30,10 +30,6 @@ export const getEventsByDay = async (day: Date) => {
   return getEventsRange(start, end);
 };
 
-
-
-
-
 export const createEvent = (data: {
   summary: string;
   start: string;
