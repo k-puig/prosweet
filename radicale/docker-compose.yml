@@ -4,6 +4,9 @@ services:
     container_name: radicale
     restart: unless-stopped
     ports:
+      -"3000:3000"
+      -"3000:3001"
+      -"3000:3002"
       - "5232:5232"
     volumes:
       - ./data:/data
