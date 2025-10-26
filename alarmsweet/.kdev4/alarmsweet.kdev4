@@ -1,0 +1,79 @@
+[Buildset]
+BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x14\x00a\x00l\x00a\x00r\x00m\x00s\x00w\x00e\x00e\x00t)
+
+[CMake]
+Build Directory Count=1
+Current Build Directory Index-Host System=0
+
+[CMake][CMake Build Directory 0]
+Build Directory Path=/home/kevin/Documents/GitHub/prosweet/alarmsweet/build
+Build Type=Debug
+CMake Binary=/nix/store/5bn5f4ivqf4xn19khh4kcg4ngnjs6spg-cmake-4.1.2/bin/cmake
+CMake Executable=/nix/store/5bn5f4ivqf4xn19khh4kcg4ngnjs6spg-cmake-4.1.2/bin/cmake
+Environment Profile=
+Extra Arguments=
+Install Directory=/usr/local
+Runtime=Host System
+
+[CustomDefinesAndIncludes][ProjectPath0]
+Path=.
+parseAmbiguousAsCPP=true
+parserArguments=-ferror-limit=100 -fspell-checking -Wdocumentation -Wunused-parameter -Wunreachable-code -Wall -std=c++17
+parserArgumentsC=-ferror-limit=100 -fspell-checking -Wdocumentation -Wunused-parameter -Wunreachable-code -Wall -std=c99
+parserArgumentsCuda=-ferror-limit=100 -fspell-checking -Wdocumentation -Wunused-parameter -Wunreachable-code -Wall -std=c++11
+parserArgumentsOpenCL=-ferror-limit=100 -fspell-checking -Wdocumentation -Wunused-parameter -Wunreachable-code -Wall -cl-std=CL1.1
+
+[CustomDefinesAndIncludes][ProjectPath0][Compiler]
+Name=g++
+
+[Launch]
+Launch Configurations=Launch Configuration 0,Launch Configuration 1
+
+[Launch][Launch Configuration 0]
+Configured Launch Modes=execute
+Configured Launchers=nativeAppLauncher
+Name=alarmctl
+Type=Native Application
+
+[Launch][Launch Configuration 0][Data]
+Arguments=
+Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x02\x00\x00\x00\x14\x00a\x00l\x00a\x00r\x00m\x00s\x00w\x00e\x00e\x00t\x00\x00\x00\x10\x00a\x00l\x00a\x00r\x00m\x00c\x00t\x00l)
+Dependency Action=Build
+EnvironmentGroup=
+Executable=file:///home/kevin/Documents/GitHub/prosweet/alarmsweet
+External Terminal=xfce4-terminal --working-directory %workdir -e %exe
+Kill Before Executing Again=4194304
+Project Target=alarmsweet,alarmctl
+Use External Terminal=true
+Working Directory=file:///home/kevin/Documents/GitHub/prosweet/alarmsweet
+isExecutable=false
+
+[Launch][Launch Configuration 1]
+Configured Launch Modes=execute
+Configured Launchers=nativeAppLauncher
+Name=alarmd
+Type=Native Application
+
+[Launch][Launch Configuration 1][Data]
+Arguments=
+Debugger Shell=
+Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x02\x00\x00\x00\x14\x00a\x00l\x00a\x00r\x00m\x00s\x00w\x00e\x00e\x00t\x00\x00\x00\x0c\x00a\x00l\x00a\x00r\x00m\x00d)
+Dependency Action=Build
+Display Demangle Names=true
+Display Static Members=false
+EnvironmentGroup=
+Executable=file:///home/kevin/Documents/GitHub/prosweet/alarmsweet
+External Terminal=xfce4-terminal --working-directory %workdir -e %exe
+GDB Path=
+Kill Before Executing Again=4194304
+Project Target=alarmsweet,alarmd
+Remote GDB Config Script=
+Remote GDB Run Script=
+Remote GDB Shell Script=
+Start With=ApplicationOutput
+Use External Terminal=true
+Working Directory=file:///home/kevin/Documents/GitHub/prosweet/alarmsweet
+isExecutable=false
+
+[Project]
+VersionControlSupport=
