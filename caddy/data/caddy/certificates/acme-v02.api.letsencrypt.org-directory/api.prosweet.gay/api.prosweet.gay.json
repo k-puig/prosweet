@@ -1,0 +1,19 @@
+{
+	"sans": [
+		"api.prosweet.gay"
+	],
+	"issuer_data": {
+		"url": "https://acme-v02.api.letsencrypt.org/acme/cert/05b9a166f0cd26edce663db5992ac04574f3",
+		"ca": "https://acme-v02.api.letsencrypt.org/directory",
+		"account": "https://acme-v02.api.letsencrypt.org/acme/acct/2751563331",
+		"renewal_info": {
+			"suggestedWindow": {
+				"start": "2025-12-24T10:37:25Z",
+				"end": "2025-12-26T05:48:14Z"
+			},
+			"_uniqueIdentifier": "jw0TovYuftFQbDMYOF1ZjiNykco.BbmhZvDNJu3OZj21mSrARXTz",
+			"_retryAfter": "2025-10-26T14:51:52.251214009Z",
+			"_selectedTime": "2025-12-25T22:34:45Z"
+		}
+	}
+}
