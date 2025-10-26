@@ -39,6 +39,20 @@ curl -X POST "http://localhost:3001/events" \
   }'
 ```
 
+```
+curl -u test:test \
+  -X POST "http://localhost:3001/events" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "summary": "Team standup",
+    "start": "2025-10-26T14:00:00Z",
+    "end":   "2025-10-26T14:15:00Z",
+    "alarms": [
+      { "action": "DISPLAY", "trigger": "-PT10M", "description": "Starts in 10 minutes" }
+    ]
+  }'
+```
+
 DELETE
 
 ```

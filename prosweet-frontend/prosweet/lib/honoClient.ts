@@ -1,5 +1,5 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-const AUTH = process.env.NEXT_PUBLIC_CALDAV_AUTH || ""; // "Basic base64(username:password)"
+const API_URL = process.env.API_URL || "http://localhost:3002";
+const AUTH = process.env.CALDAV_AUTH || "Basic dGVzdDp0ZXN0"; // "Basic base64(username:password)"
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {

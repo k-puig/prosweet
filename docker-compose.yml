@@ -1,0 +1,66 @@
+services:
+  app:
+    build: prosweet-caldav/app
+    container_name: prosweet-caldav
+    networks: [appnet]
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - CALDAV_URL=http://radicale:5232
+
+  web:
+    build: prosweet-frontend/prosweet
+    container_name: proosweet-web
+    networks: [appnet]
+    ports:
+      - "3003:3000"
+    environment:
+      - API_URL="http://localhost:3002"
+
+  radicale:
+    image: tomsquest/docker-radicale:latest
+    container_name: radicale
+    restart: unless-stopped
+    networks: [appnet]
+    ports:
+      - "5232:5232"
+    volumes:
+      - ./radicale/data:/data
+      - ./radicale/config:/config:ro
+    # environment:
+      # optionally: override UID/GID if host permissions matter
+      # - UID=1000
+      # - GID=1000
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - KILL
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5232/"]
+      interval: 30s
+      retries: 3
+
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/data:/data
+      - ./caddy/conf:/etc/caddy
+
+networks:
+  appnet:
+    driver: bridge
+

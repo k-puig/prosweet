@@ -1,0 +1,25 @@
+cal.localhost {
+  encode zstd gzip
+
+  # Caddy handles Basic Auth
+  # Create a bcrypt: `caddy hash-password --plaintext 'yourpass'`
+  basicauth {
+    dylan JDJhJDEyJH...your-bcrypt-hash...
+  }
+
+  # Auto-discovery for Apple clients
+  @wellknown path /.well-known/caldav* /.well-known/carddav*
+  handle @wellknown {
+    # Send the authenticated user to their principal collection
+    redir /{http.auth.user.id}/ 302
+  }
+
+  # Proxy to Radicale
+  reverse_proxy http://radicale:5232 {
+    # Tell Radicale who the authenticated user is
+    header_up X-Remote-User {http.auth.user.id}
+    header_up Host {host}
+    header_up X-Forwarded-Proto {scheme}
+  }
+}
+
