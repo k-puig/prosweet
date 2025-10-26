@@ -6,7 +6,7 @@ services:
     environment:
       - PORT=3002
       - CALDAV_URL=http://radicale:5232
-    # ports: ["3002:3002"]  # optional: remove once Caddy is fronting it
+    ports: ["3002:3002"]  # optional: remove once Caddy is fronting it
 
   web:
     build: prosweet-frontend/prosweet
@@ -14,14 +14,14 @@ services:
     networks: [appnet]
     environment:
       - API_URL=https://api.prosweet.gay
-    # ports: ["3003:3000"]  # optional: remove once Caddy is fronting it
+    ports: ["3003:3000"]  # optional: remove once Caddy is fronting it
 
   radicale:
     image: tomsquest/docker-radicale:latest
     container_name: radicale
     restart: unless-stopped
     networks: [appnet]
-    # ports: ["5232:5232"]  # keep internal; Caddy will proxy
+    ports: ["5232:5232"]  # keep internal; Caddy will proxy
     volumes:
       - ./radicale/data:/data
       - ./radicale/config:/config:ro
