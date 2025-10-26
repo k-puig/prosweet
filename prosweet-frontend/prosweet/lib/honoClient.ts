@@ -14,6 +14,10 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+export const getAllEvents = async () =>
+  api<{ events: any[] }>("/events?all=true");
+
+
 export const getEventsRange = async (start: Date, end: Date) =>
   api<{ events: any[] }>(
     `/events?start=${start.toISOString()}&end=${end.toISOString()}`
@@ -25,6 +29,10 @@ export const getEventsByDay = async (day: Date) => {
   end.setDate(end.getDate() + 1);
   return getEventsRange(start, end);
 };
+
+
+
+
 
 export const createEvent = (data: {
   summary: string;
