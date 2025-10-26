@@ -1,25 +1,21 @@
-cal.localhost {
+prosweet.gay { reverse_proxy web:3000 }
+api.prosweet.gay { reverse_proxy prosweet-caldav:3002 }
+
+caldav.prosweet.gay {
   encode zstd gzip
 
-  # Caddy handles Basic Auth
-  # Create a bcrypt: `caddy hash-password --plaintext 'yourpass'`
-  basicauth {
-    dylan JDJhJDEyJH...your-bcrypt-hash...
+  # iOS autoconfig probes this
+  handle_path /.well-known/caldav* {
+    reverse_proxy radicale:5232
   }
 
-  # Auto-discovery for Apple clients
-  @wellknown path /.well-known/caldav* /.well-known/carddav*
-  handle @wellknown {
-    # Send the authenticated user to their principal collection
-    redir /{http.auth.user.id}/ 302
-  }
-
-  # Proxy to Radicale
-  reverse_proxy http://radicale:5232 {
-    # Tell Radicale who the authenticated user is
-    header_up X-Remote-User {http.auth.user.id}
-    header_up Host {host}
+  # everything else to Radicale
+  reverse_proxy radicale:5232 {
+    # forward auth and real IP
+    header_up Authorization {http.request.header.Authorization}
     header_up X-Forwarded-Proto {scheme}
+    header_up X-Forwarded-For {remote}
+    header_up Host {host}
   }
 }
 
