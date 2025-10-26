@@ -1,14 +1,21 @@
 services:
   app:
-    build: app
+    build: prosweet-caldav/app
     container_name: prosweet-caldav
     networks: [appnet]
     ports:
-      - "3001:3000"
+      - "3002:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
       - CALDAV_URL=http://radicale:5232
+
+  web:
+    build: prosweet-frontend/prosweet
+    container_name: proosweet-web
+    networks: [appnet]
+    ports:
+      - "3003:3000"
 
   radicale:
     image: tomsquest/docker-radicale:latest
@@ -39,6 +46,18 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:5232/"]
       interval: 30s
       retries: 3
+
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/data:/data
+      - ./caddy/conf:/etc/caddy
 
 networks:
   appnet:

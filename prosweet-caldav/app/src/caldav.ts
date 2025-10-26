@@ -101,7 +101,6 @@ export async function listEvents(
 }
 
 export type CreateEventInput = {
-  calendarUrl: string;
   // Minimal fields
   summary: string;
   start: string; // ISO
@@ -229,4 +228,27 @@ export async function deleteEvent(authHeader: string, uidOrHref: string, etag?: 
     const msg = typeof e?.message === "string" ? e.message : String(e);
     throw new Error(`Failed to delete event (status ${status ?? "unknown"}): ${msg}`);
   }
+}
+
+export async function getAlarms(authHeader: string, uid: string) {
+  const client = await getClient(authHeader);
+  const calendars = await client.getCalendars();
+  if (!calendars?.length) throw new Error("No calendars found for this user");
+
+  const calendarUrl = calendars[0].url;
+
+  // Use UID-based retrieval if supported
+  // @ts-ignore
+  if (typeof client.getEventByUid === "function") {
+    // @ts-ignore
+    const event = await client.getEventByUid(calendarUrl, uid);
+    if (!event) throw new Error(`Event not found for UID ${uid}`);
+    return Array.isArray(event.alarms) ? event.alarms : [];
+  }
+
+  // Fallback: list and match UID manually
+  const events = await client.getEvents(calendarUrl, { all: true } as any);
+  const found = (events as any[]).find((e) => e?.uid === uid);
+  if (!found) throw new Error(`Event not found for UID ${uid}`);
+  return Array.isArray(found.alarms) ? found.alarms : [];
 }

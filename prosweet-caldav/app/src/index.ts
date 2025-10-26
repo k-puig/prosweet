@@ -9,6 +9,7 @@ import {
   deleteEvent,
   type ListEventsOptions,
 } from "./caldav";
+import { getAlarmTimestamps } from "./alarm";
 
 const app = new Hono();
 
@@ -17,7 +18,7 @@ app.use(
   "/*",
   cors({
     origin: "*",
-    allowMethods: ["GET", "POST", "DELETE", "PUT", "OPTIONS"],
+    allowMethods: ["GET", "POST", "DELETE"],
     allowHeaders: ["Content-Type", "If-Match", "Authorization"],
     maxAge: 86400,
   })
@@ -46,11 +47,7 @@ app.get("/calendars", async (c) => {
  */
 app.get("/events", async (c) => {
   try {
-    const auth = c.req.header("Authorization");
-    // const calendarUrl = c.req.query("calendarUrl");
-    // if (!calendarUrl) {
-    //   throw new HTTPException(400, { message: "Missing ?calendarUrl" });
-    // }
+    const auth: any = c.req.header("Authorization");
     const opts: ListEventsOptions = {
       start: c.req.query("start") ?? undefined,
       end: c.req.query("end") ?? undefined,
@@ -61,6 +58,21 @@ app.get("/events", async (c) => {
   } catch (err) {
     const status = err instanceof HTTPException ? err.status : 401;
     return c.json({ error: (err as Error).message }, status);
+  }
+});
+
+app.get("/alarms", async (c) => {
+  try {
+    const auth = c.req.header("Authorization");
+    if (!auth) return c.json({ error: "Missing Authorization header" }, 401);
+
+    const from = c.req.query("from") ?? undefined;
+    const to = c.req.query("to") ?? undefined;
+
+    const timestamps = await getAlarmTimestamps(auth, from, to);
+    return c.json({ alarms: timestamps });
+  } catch (err) {
+    return c.json({ error: (err as Error).message }, 400);
   }
 });
 
